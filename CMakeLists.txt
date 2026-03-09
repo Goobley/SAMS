@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
 #Check for flag support
 enable_language(CXX)
@@ -25,6 +25,8 @@ option(KOKKOS_SYCL "Enable Kokkos with SYCL backend" OFF)
 option(KOKKOS_OPENMP "Enable Kokkos with OpenMP backend" OFF)
 #Enable native CUDA compilation
 option(NATIVE_CUDA "Compile all .cpp files with nvcc as CUDA" OFF)
+#Enable native HIP compilation
+option(NATIVE_HIP "Compile all .cpp files with hipcc as HIP" OFF)
 #Debug to stderr instead of log files
 option(DEBUG_TO_STDERR "Send debug output to stderr instead of log files" OFF)
 #Do not unroll loops in the native OpenMP implementation. Usually reduces performance.
@@ -37,6 +39,7 @@ option(TIMER_SUPPORT "Enable timing of packages" OFF)
 option(DEBUG_COMPILE "Compile with -O0 (debug compile mode)" OFF)
 #Allow rank inconsistency in queries for whole code events (terminate, output)
 option(ALLOW_RANK_INCONSISTENCY "Allow rank inconsistency in queries for whole code events (terminate, output)" OFF)
+option(AAC6 "Flag combo for AAC6" OFF)
 
 if (TIMER_SUPPORT)
   message(STATUS "Enabling timer support")
@@ -76,13 +79,14 @@ endif()
 if(MPI)
   find_package(MPI REQUIRED)
   message(STATUS "Enabling MPI support")
-  set(CMAKE_CXX_COMPILER "mpicxx" CACHE FILEPATH "MPI C++ compiler" FORCE)
+  # set(CMAKE_CXX_COMPILER "mpicxx" CACHE FILEPATH "MPI C++ compiler" FORCE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_MPI")
 
+
   # If also requesting CUDA/Kokkos CUDA, make mpicxx the CUDA host compiler so nvcc/nvcc_wrapper and Kokkos use it
-  if(KOKKOS_CUDA OR NATIVE_CUDA)
-    set(CMAKE_CUDA_HOST_COMPILER "mpicxx" CACHE FILEPATH "CUDA host C++ compiler" FORCE)
-  endif()
+  #  if(KOKKOS_CUDA OR NATIVE_CUDA)
+  #  set(CMAKE_CUDA_HOST_COMPILER "mpicxx" CACHE FILEPATH "CUDA host C++ compiler" FORCE)
+  #  endif()
 endif()
 
 if(KOKKOS_CUDA)
@@ -161,7 +165,8 @@ if (HAVE_OPENMP)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
 
-find_package(HDF5 REQUIRED COMPONENTS CXX)
+find_package(HDF5 REQUIRED COMPONENTS)
+message("HDF5 Paths ${HDF5_FOUND},  ${HDF5_INCLUDE_DIRS}, ${HDF5_LIBRARIES}")
 
 #Recursively gather all .cpp source files in src/
 file(GLOB_RECURSE SAMS_SOURCES src/*.cpp)
@@ -184,7 +189,7 @@ endif()
 
 add_executable(sams ${SAMS_SOURCES})
 message(STATUS "CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}")
-  
+
 
 target_include_directories(sams PRIVATE ${HDF5_INCLUDE_DIRS})
 target_include_directories(sams PRIVATE "${CMAKE_SOURCE_DIR}/src/PhysicsPackages/LARE")
@@ -203,6 +208,17 @@ target_include_directories(sams PRIVATE "${CMAKE_SOURCE_DIR}/include/boundaryCon
 target_include_directories(sams PRIVATE "${CMAKE_SOURCE_DIR}/include")
 target_link_libraries(sams PRIVATE ${HDF5_LIBRARIES})
 target_link_libraries(sams PRIVATE stdc++)
+
+if (MPI)
+  target_include_directories(sams PRIVATE ${MPI_CXX_INCLUDE_DIRS})
+  target_link_libraries(sams PRIVATE MPI::MPI_CXX)
+endif()
+
+if (AAC6)
+  find_package(MPI REQUIRED)
+  target_include_directories(sams PRIVATE ${MPI_CXX_INCLUDE_DIRS})
+  target_link_libraries(sams PRIVATE MPI::MPI_CXX)
+endif()
 
 if (KOKKOS_CUDA OR KOKKOS_HIP OR KOKKOS_SYCL OR KOKKOS_OPENMP)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_KOKKOS")

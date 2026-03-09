@@ -235,7 +235,7 @@ namespace SAMS
                 other.mpiType = MPI_DATATYPE_NULL;
                 other.refCount = 0;
             }
-            
+
             /**
              * Should never come up, but delete move assignment operator just in case
              */
@@ -829,7 +829,7 @@ namespace SAMS
                 sizes,
                 subsizes,
                 starts,
-                layout, 
+                layout,
                 baseType,
                 &newType));
                 return cacheType(newType);
@@ -889,7 +889,7 @@ namespace SAMS
          * @param array_of_displacements Array of displacements
          * @param array_of_types Array of MPI_Datatypes
          */
-        
+
         MPI_Datatype createMPIStructType( [[maybe_unused]] int elements, [[maybe_unused]] const int *array_of_blocklengths, [[maybe_unused]] const MPI_Aint *array_of_displacements, [[maybe_unused]] const MPI_Datatype *array_of_types)
         {
             #ifdef USE_MPI
@@ -981,7 +981,7 @@ namespace SAMS
         MPI_Datatype createMPIContiguousType([[maybe_unused]] int count, [[maybe_unused]] MPI_Datatype baseType)
         {
             #ifdef USE_MPI
-            MPI_Datatype newType;            
+            MPI_Datatype newType;
             checkMPIError(MPI_Type_contiguous(
                 count,
                 baseType,
@@ -1057,7 +1057,7 @@ namespace SAMS
             #endif
         }
 
-        
+
         /**
          * Get a name for a given MPI_Datatype
          * @param mpiType The MPI_Datatype to get the name for
@@ -1115,9 +1115,11 @@ namespace SAMS
             SIGNED_INDEX_TYPE LB[MAX_RANK], UB[MAX_RANK];
             for (int axis = 0; axis < rank; axis++)
             {
-                auto &axisRef = ar.getAxis(dims[axis].axisName);
+                int mpiAxisIndex = ar.getMPIAxis(dims[axis].axisName);
                 //For non-decomposed axes, set MPI types to NULL
-                if (axisRef.MPIAxisIndex <0){
+                // auto &axisRef = ar.getAxis(dims[axis].axisName);
+                // if (axisRef.MPIAxisIndex <0){
+                if (mpiAxisIndex < 0) {
                     mpiSend[axis*2] = MPI_DATATYPE_NULL;
                     mpiSend[axis*2+1] = MPI_DATATYPE_NULL;
                     mpiRecv[axis*2] = MPI_DATATYPE_NULL;
@@ -1228,7 +1230,7 @@ namespace SAMS
                     mpiRecv[axis*2+1] = MPI_DATATYPE_NULL;
                 }
             }
-        } 
+        }
 
         /**
          * Decompose all registered axes
@@ -1265,7 +1267,7 @@ namespace SAMS
         }
 
         /**
-         * 
+         *
          */
         void haloExchange([[maybe_unused]] void* data, [[maybe_unused]] int rank, [[maybe_unused]] MPI_Datatype* mpiSend, [[maybe_unused]] MPI_Datatype* mpiRecv)
         {

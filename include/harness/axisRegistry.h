@@ -49,7 +49,7 @@ namespace SAMS
 
 			FUNCTORMETHODPREFIX INLINE assignStaggeredValues(T* vals, staggerType stag)
                 : stagger(stag), values(vals)
-            { 
+            {
             }
 
 			FUNCTORMETHODPREFIX INLINE T operator()(UNSIGNED_INDEX_TYPE i) const
@@ -287,7 +287,7 @@ namespace SAMS
                 fenceFn();
                 //Now calculate the position axis by integrating the delta
                 axisInfo.axis.emplace<portableWrapper::portableArray<T_array, 1, tag>>();
-                auto & axisArray = std::any_cast<portableWrapper::portableArray<T_array, 1, tag>&>(axisInfo.axis); 
+                auto & axisArray = std::any_cast<portableWrapper::portableArray<T_array, 1, tag>&>(axisInfo.axis);
                 manager.allocateManaged(axisArray, range);
                 portableWrapper::fence();
                 //Set lower boundary value
@@ -641,7 +641,7 @@ namespace SAMS
              * @param array The performance portable array to fill
              * @param stagger The staggering type of the axis
              * @tparam T_array The data type of the array - Must match the type used to create the axis
-             * @tparam tag The memory tag of the array 
+             * @tparam tag The memory tag of the array
              */
             template<typename T_array, portableWrapper::arrayTags tag>
             void fillPPLocalDelta(portableWrapper::portableArray<T_array, 1, tag> &array, staggerType stagger)
@@ -1071,7 +1071,7 @@ namespace SAMS
             ax.dim.lowerGhosts = std::max(ax.dim.lowerGhosts, ghosts);
         }
 
-        /** 
+        /**
          * Set the maximum number of upper ghost cells for the given axis
          * NOTE: This only sets the maximum, it does not reduce it if the value is lower
          * @param name The name of the axis

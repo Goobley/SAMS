@@ -98,7 +98,6 @@ namespace portableWrapper
 
             struct kernelInflightInfo{
                 bool active;
-                bool firstCallThisBlock;
             };
 
             template<typename T_mapper, typename T_reducer, typename T_data, int rank>
@@ -502,14 +501,14 @@ namespace portableWrapper
         }
 
         UNREPEATED void printInfo(){
-            SAMS::cout << "HIP" << std::endl;
+            std::cout << "HIP" << std::endl;
             int device;
             HIP_ERROR_CHECK(hipGetDevice(&device));
             hipDeviceProp_t prop;
             HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device));
-            SAMS::cout << "HIP device: " << prop.name << std::endl;
-            SAMS::cout << "HIP device compute capability: " << prop.major << "." << prop.minor << std::endl;
-            SAMS::cout << "HIP device total memory: " << prop.totalGlobalMem / (1024 * 1024) << " MB" << std::endl;
+            std::cout << "HIP device: " << prop.name << std::endl;
+            std::cout << "HIP device compute capability: " << prop.major << "." << prop.minor << std::endl;
+            std::cout << "HIP device total memory: " << prop.totalGlobalMem / (1024 * 1024) << " MB" << std::endl;
         }
 
         UNREPEATED void initialize(int &argc, char *argv[])
@@ -535,7 +534,184 @@ namespace portableWrapper
                 HIP_ERROR_CHECK(hipSetDevice(0));
             }
         }
+        //HIP atomic operations
+        namespace atomic
+        {
+            /**
+             * Atomic addition function for HIP
+             * @param data Data to perform the atomic addition on
+             * @param val Value to add atomically
+             */
+            template<typename T1, typename T2>
+            DEVICEPREFIX void Add(T1& data, T2 val) {
+            ::atomicAdd(&data, val);
+            }
 
+            /**
+             * Atomic AND function for HIP
+             * @param data Data to perform the atomic AND on
+             * @param val Value to AND atomically
+             */
+            template<typename T>
+            __device__ void And(T& data, T val) {
+            if constexpr(std::is_integral_v<T>) {
+                ::atomicAnd(&data, val);
+            } else if constexpr(std::is_same_v<T, float>) {
+                using intType = int32_t;
+                intType* data_as_int = reinterpret_cast<intType*>(&data);
+                intType orig = *data_as_int, swapped;
+                do {
+                swapped = orig;
+                orig = ::atomicCAS(data_as_int, swapped,
+                    __float_as_int(__int_as_float(swapped) & val));
+                } while (swapped != orig);
+                data = __int_as_float(orig);
+            } else if constexpr(std::is_same_v<T, double>) {
+                using intType = int64_t;
+                intType* data_as_int = reinterpret_cast<intType*>(&data);
+                intType orig = *data_as_int, swapped;
+                do {
+                swapped = orig;
+                orig = ::atomicCAS(data_as_int, swapped,
+                    __double_as_longlong(__longlong_as_double(swapped) & val));
+                } while (swapped != orig);
+                data = __longlong_as_double(orig);
+            } else {
+                static_assert(alwaysFalse<T>::value, "Atomic And not supported for this type");
+            }
+            }
+
+            /**
+             * Atomic DECREMENT function for HIP
+             * @param data Data to perform the atomic DECREMENT on
+             */
+            template<typename T1>
+            DEVICEPREFIX void Dec(T1& data) {
+            ::atomicSub(&data, T1(1));
+            }
+
+            /**
+             * Atomic INCREMENT function for HIP
+             * @param data Data to perform the atomic INCREMENT on
+             */
+            template<typename T1>
+            DEVICEPREFIX void Inc(T1& data) {
+            ::atomicAdd(&data, T1(1));
+            }
+
+            /**
+             * Atomic MAX function for HIP
+             * @param data Data to perform the atomic MAX on
+             * @param val Value to compare for MAX atomically
+             */
+            template<typename T>
+            __device__ void Max(T& data, T val) {
+            if constexpr(std::is_integral_v<T>) {
+                ::atomicMax(&data, val);
+            } else if constexpr(std::is_same_v<T, float>) {
+                using intType = int32_t;
+                intType* data_as_int = reinterpret_cast<intType*>(&data);
+                intType orig = *data_as_int, swapped;
+                do {
+                swapped = orig;
+                orig = ::atomicCAS(data_as_int, swapped,
+                    __float_as_int(fmaxf(val, __int_as_float(swapped))));
+                } while (swapped != orig);
+                data = __int_as_float(orig);
+            } else if constexpr(std::is_same_v<T, double>) {
+                using intType = int64_t;
+                intType* data_as_int = reinterpret_cast<intType*>(&data);
+                intType orig = *data_as_int, swapped;
+                do {
+                swapped = orig;
+                orig = ::atomicCAS(data_as_int, swapped,
+                    __double_as_longlong(fmax(val, __longlong_as_double(swapped))));
+                } while (swapped != orig);
+                data = __longlong_as_double(orig);
+            } else {
+                static_assert(alwaysFalse<T>::value, "Atomic Max not supported for this type");
+            }
+            }
+
+            /**
+             * Atomic MIN function for HIP
+             * @param data Data to perform the atomic MIN on
+             * @param val Value to compare for MIN atomically
+             */
+            template<typename T>
+            __device__ void Min(T& data, T val) {
+            if constexpr(std::is_integral_v<T>) {
+                ::atomicMin(&data, val);
+            } else if constexpr(std::is_same_v<T, float>) {
+                using intType = int32_t;
+                intType* data_as_int = reinterpret_cast<intType*>(&data);
+                intType orig = *data_as_int, swapped;
+                do {
+                swapped = orig;
+                orig = ::atomicCAS(data_as_int, swapped,
+                    __float_as_int(fminf(val, __int_as_float(swapped))));
+                } while (swapped != orig);
+                data = __int_as_float(orig);
+            } else if constexpr(std::is_same_v<T, double>) {
+                using intType = int64_t;
+                intType* data_as_int = reinterpret_cast<intType*>(&data);
+                intType orig = *data_as_int, swapped;
+                do {
+                swapped = orig;
+                orig = ::atomicCAS(data_as_int, swapped,
+                    __double_as_longlong(fmin(val, __longlong_as_double(swapped))));
+                } while (swapped != orig);
+                data = __longlong_as_double(orig);
+            } else {
+                static_assert(alwaysFalse<T>::value, "Atomic Min not supported for this type");
+            }
+            }
+
+            /**
+             * Atomic OR function for HIP
+             * @param data Data to perform the atomic OR on
+             * @param val Value to OR atomically
+             */
+            template<typename T>
+            __device__ void Or(T& data, T val) {
+            if constexpr(std::is_integral_v<T>) {
+                ::atomicOr(&data, val);
+            } else if constexpr(std::is_same_v<T, float>) {
+                using intType = int32_t;
+                intType* data_as_int = reinterpret_cast<intType*>(&data);
+                intType orig = *data_as_int, swapped;
+                do {
+                swapped = orig;
+                orig = ::atomicCAS(data_as_int, swapped,
+                    __float_as_int(__int_as_float(swapped) | val));
+                } while (swapped != orig);
+                data = __int_as_float(orig);
+            } else if constexpr(std::is_same_v<T, double>) {
+                using intType = int64_t;
+                intType* data_as_int = reinterpret_cast<intType*>(&data);
+                intType orig = *data_as_int, swapped;
+                do {
+                swapped = orig;
+                orig = ::atomicCAS(data_as_int, swapped,
+                    __double_as_longlong(__longlong_as_double(swapped) | val));
+                } while (swapped != orig);
+                data = __longlong_as_double(orig);
+            } else {
+                static_assert(alwaysFalse<T>::value, "Atomic Or not supported for this type");
+            }
+            }
+
+            /**
+             * Atomic Subtraction function for HIP
+             * @param data Data to perform the atomic Subtraction on
+             * @param val Value to subtract atomically
+             */
+            template<typename T1, typename T2>
+            DEVICEPREFIX void Sub(T1& data, T2 val) {
+            ::atomicSub(&data, val);
+            }
+
+        } // namespace atomic
     } // namespace hip
 } // namespace portableWrapper
 #endif // USE_HIP

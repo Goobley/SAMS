@@ -47,8 +47,9 @@ class HDF5File : public writer<HDF5File> {
       std::filesystem::remove(h5filename);
     }
     #ifdef USE_MPI
-    SAMS::MPIManager<SAMS::MPI_DECOMPOSITION_RANK> &mpi = SAMS::getMPIManager<SAMS::MPI_DECOMPOSITION_RANK>();
-    int rank = mpi.getRank();
+    // SAMS::MPIManager<SAMS::MPI_DECOMPOSITION_RANK> &mpi = SAMS::getMPIManager<SAMS::MPI_DECOMPOSITION_RANK>();
+    // int rank = mpi.getRank();
+    int rank = 0;
     h5filename += "_rank" + std::to_string(rank);
     #endif
 

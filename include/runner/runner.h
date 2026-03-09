@@ -13,7 +13,7 @@
 
 namespace SAMS
 {
-#include "runnerMacros.h"    
+#include "runnerMacros.h"
 /**
  * Struct to hold time stepping state
  */
@@ -68,12 +68,12 @@ namespace SAMS
 
     /**
      * Activate a package on the runner by name
-     */        
+     */
         void activatePackage(const std::string& name){
             activateFn(object, name);
         }
     };
-    
+
     /**
      * Runner class that runs a set of simulations
      */
@@ -131,7 +131,7 @@ namespace SAMS
         FULL_CALL_X(registerDeckElements); //Register input deck elements
 
         /**
-         * 
+         *
          */
         FULL_CALL_X(registerAxes);//Register axes
         FULL_CALL_X(registerVariables); //Register variables
@@ -162,7 +162,7 @@ namespace SAMS
             callCore_calculateTimestep();
             #ifdef USE_MPI
             SAMS::harness& h = std::get<harness&>(runnerData);
-            MPI_Allreduce(MPI_IN_PLACE, &tData.dt, 1, MPI_DOUBLE, MPI_MIN, h.MPIManager.getGlobalComm());
+            MPI_Allreduce(MPI_IN_PLACE, &tData.dt, 1, MPI_DOUBLE, MPI_MIN, h.MPIManager.getComm());
             #endif
             //Allow the simulations to gather the updated timestep
             callCore_getTimestep();
@@ -175,7 +175,7 @@ namespace SAMS
 #if defined(USE_MPI) && defined(ALLOW_RANK_INCONSISTENCY)
             SAMS::harness& h = std::get<harness&>(runnerData);
             int localTerm = terminate ? 1 : 0;
-            MPI_Allreduce(MPI_IN_PLACE, &localTerm, 1, MPI_INT, MPI_LOR, h.MPIManager.getGlobalComm());
+            MPI_Allreduce(MPI_IN_PLACE, &localTerm, 1, MPI_INT, MPI_LOR, h.MPIManager.getComm());
             terminate = (localTerm == 1);
 #endif
             return terminate;
@@ -188,7 +188,7 @@ namespace SAMS
 #if defined(USE_MPI) && defined(ALLOW_RANK_INCONSISTENCY)
             SAMS::harness& h = std::get<harness&>(runnerData);
             int localOut = outputNow ? 1 : 0;
-            MPI_Allreduce(MPI_IN_PLACE, &localOut, 1, MPI_INT, MPI_LOR, h.MPIManager.getGlobalComm());
+            MPI_Allreduce(MPI_IN_PLACE, &localOut, 1, MPI_INT, MPI_LOR, h.MPIManager.getComm());
             outputNow = (localOut == 1);
 #endif
             return outputNow;
@@ -204,7 +204,7 @@ namespace SAMS
         template<typename T>
         void registerOutputVariables(writer<T>& w){
             callCore_registerOutputVariables<false, true,true,0,T>(w);
-        } 
+        }
 
         CALL_X(writeOutputMeshes); //Write output
         template<typename T>
@@ -575,7 +575,7 @@ namespace SAMS
                 endOfTimestep(); //End of timestep (remap for LARE3D)
                 if (queryOutput()){
                     writeOutput(); //If ANY package says to output, do so
-                }                    
+                }
                 if (queryTerminate()){// If ANY package says to terminate, do so
                     break;
                 }
@@ -609,7 +609,7 @@ namespace SAMS
         }
 
     };
-    
+
 } // namespace SAMS
 
 
