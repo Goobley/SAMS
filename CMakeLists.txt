@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20)
 
 #Check for flag support
 enable_language(CXX)
@@ -161,7 +161,7 @@ if (HAVE_OPENMP)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
 
-find_package(HDF5 REQUIRED COMPONENTS CXX)
+find_package(HDF5 REQUIRED COMPONENTS)
 
 #Recursively gather all .cpp source files in src/
 file(GLOB_RECURSE SAMS_SOURCES src/*.cpp)
