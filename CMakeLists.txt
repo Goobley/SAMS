@@ -184,6 +184,18 @@ if(NATIVE_HIP)
   set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -DUSE_HIP")
 endif()
 
+if(ENABLE_ROCTX)
+  find_library(
+      ROCTX_LIBRARY
+      NAMES roctx64
+      HINTS ${ROCM_PATH}/lib)
+  if(ROCTX_LIBRARY)
+      add_compile_definitions(USE_ROCTX)
+  else()
+    message(WARNING "ENABLE_ROCTX was set but roctx headers/libs not found; disabling")
+  endif()
+endif()
+
 add_executable(sams ${SAMS_SOURCES})
 message(STATUS "CMAKE_SOURCE_DIR=${CMAKE_SOURCE_DIR}")
   
@@ -206,20 +218,10 @@ target_include_directories(sams PRIVATE "${CMAKE_SOURCE_DIR}/include")
 target_link_libraries(sams PRIVATE ${HDF5_LIBRARIES})
 target_link_libraries(sams PRIVATE stdc++)
 
-if(ENABLE_ROCTX)
-  find_library(
-      ROCTX_LIBRARY
-      NAMES roctx64
-      HINTS ${ROCM_PATH}/lib)
-  if(ROCTX_LIBRARY)
-      target_include_directories(sams PRIVATE ${ROCM_PATH})
-      target_link_libraries(sams PRIVATE ${ROCTX_LIBRARY})
-      add_compile_definitions(USE_ROCTX)
-  else()
-    message(WARNING "ENABLE_ROCTX was set but roctx headers/libs not found; disabling")
-  endif()
+if(ROCTX_LIBRARY)
+    target_include_directories(sams PRIVATE ${ROCM_PATH})
+    target_link_libraries(sams PRIVATE ${ROCTX_LIBRARY})
 endif()
-
 
 if (MPI)
   target_include_directories(sams PRIVATE ${MPI_CXX_INCLUDE_DIRS})
