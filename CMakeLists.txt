@@ -207,18 +207,19 @@ target_link_libraries(sams PRIVATE ${HDF5_LIBRARIES})
 target_link_libraries(sams PRIVATE stdc++)
 
 if(ENABLE_ROCTX)
-  find_path(ROCTX_HEADER roctx.h)
-  find_library(ROCTX_LIBRARY roctx)
-  if(ROCTX_HEADER AND ROCTX_LIBRARY)
-    get_filename_component(ROCTX_INCLUDE_DIR ${ROCTX_HEADER} DIRECTORY)
-    target_include_directories(sams PRIVATE ${ROCTX_INCLUDE_DIR})
-    target_link_libraries(sams PRIVATE ${ROCTX_LIBRARY})
-    add_compile_definitions(USE_ROCTX)
-    message(STATUS "ROCTX profiling enabled")
+  find_library(
+      ROCTX_LIBRARY
+      NAMES roctx64
+      HINTS ${ROCM_PATH}/lib)
+  if(ROCTX_LIBRARY)
+      target_include_directories(sams PRIVATE ${ROCM_PATH})
+      target_link_libraries(sams PRIVATE ${ROCTX_LIBRARY})
+      add_compile_definitions(USE_ROCTX)
   else()
     message(WARNING "ENABLE_ROCTX was set but roctx headers/libs not found; disabling")
   endif()
 endif()
+
 
 if (MPI)
   target_include_directories(sams PRIVATE ${MPI_CXX_INCLUDE_DIRS})
