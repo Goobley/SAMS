@@ -2,7 +2,7 @@
 #define SAMS_PROFILING_H
 
 #ifdef USE_ROCTX
-#include <roctx.h>
+#include <roctracer/roctx.h>
 #define PROF_PUSH(NAME) roctxRangePushA(NAME)
 #define PROF_POP() roctxRangePop()
 #define PROF_MARK(NAME) roctxMarkA(NAME)

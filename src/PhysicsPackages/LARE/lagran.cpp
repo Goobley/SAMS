@@ -60,7 +60,6 @@ namespace LARE
                                                   int j0, int j1, int j2, int j3,
                                                   int k0, int k1, int k2, int k3)
     {
-        PROF_PUSH("edge_viscosity");
         dvdots = pw::min(0.0, dvdots);
         T_dataType rho_edge = 2.0 * data.rho_v(i1, j1, k1) * data.rho_v(i2, j2, k2) / (data.rho_v(i1, j1, k1) + data.rho_v(i2, j2, k2));
 
@@ -91,7 +90,6 @@ namespace LARE
         // Find q_kur / abs(dv)
         T_dataType q_k_bar = rho_edge *
                              (data.visc2_norm * dv + std::sqrt(data.visc2_norm * data.visc2_norm * dv2 + (data.visc1 * cs_edge) * (data.visc1 * cs_edge)));
-        PROF_POP();
         return q_k_bar * (1.0 - psi) * dvdots;
     }
 
