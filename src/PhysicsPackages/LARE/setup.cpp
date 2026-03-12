@@ -260,6 +260,10 @@ namespace LARE
         manager.allocate(remap_data.rho_v, Range(-1, nx + 2), Range(-1, ny + 2), Range(-1, nz + 2));
         manager.allocate(remap_data.rho_v1, Range(-1, nx + 2), Range(-1, ny + 2), Range(-1, nz + 2));
         manager.allocate(remap_data.flux, Range(-2, nx + 2), Range(-2, ny + 2), Range(-2, nz + 2));
+        if (remap_data.use_big_flux) {
+            manager.allocate(remap_data.big_flux, Range(0, 2), Range(-2, nx + 2), Range(-2, ny + 2), Range(-2, nz + 2));
+            // Can paralellise flux for both induction terms and mass flux. Then both energy terms, and finally all three momentum terms
+        }
     }
 
     /**

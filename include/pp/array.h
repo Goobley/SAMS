@@ -484,7 +484,7 @@ namespace portableWrapper
 		DEVICEPREFIX void rebaseCore(T_Range newRange, T_others... otherRanges)
 		{
 			if constexpr(level==0) offset=0;
-			static_assert(sizeof...(otherRanges) + 1 == rank, "Number of ranges must match the rank of the portable array.");
+			static_assert(level != 0 || sizeof...(otherRanges) + 1 == rank, "Number of ranges must match the rank of the portable array.");
 			//Only do this check on host, not device
 			#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
 			if (newRange.upper_bound - newRange.lower_bound != size[level] - 1)

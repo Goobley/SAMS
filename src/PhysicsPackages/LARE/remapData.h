@@ -30,6 +30,9 @@ namespace LARE
     volumeArray rho_v;
     volumeArray rho_v1;
     volumeArray flux;
+
+    static constexpr bool use_big_flux = true;
+    portableWrapper::acceleratedArray<LARE::T_dataType, 4> big_flux;
   };
 }
 

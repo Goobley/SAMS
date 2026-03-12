@@ -17,15 +17,15 @@ namespace LARE {
     void remap(LARE3D& lare, simulationData& data, remapData& remap_data);
 
     template <AxisName v_comp, AxisName b_comp>
-    void v_b_flux(simulationData& data, remapData& remap_data);
+    void v_b_flux(simulationData& data, remapData& remap_data, int slice_idx=-1);
 
     template <AxisName axis>
     void mass_flux(simulationData& data, remapData& remap_data);
 
     template <AxisName axis, auto mPtr>
-    void mom_flux(simulationData& data, remapData& remap_data);
+    void mom_flux(simulationData& data, remapData& remap_data, int slice_idx=-1);
 
     template <AxisName axis, auto mPtr>
-    void energy_flux(simulationData& data, remapData& remap_data);
+    void energy_flux(simulationData& data, remapData& remap_data, int slice_idx=-1);
 }
 #endif
