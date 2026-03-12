@@ -1,4 +1,5 @@
 #include "general_remap.hpp"
+#include "profiling.h"
 
 namespace LARE {
     namespace pw = portableWrapper;
@@ -109,6 +110,7 @@ namespace LARE {
 
     template <AxisName v_comp, AxisName b_comp>
     void v_b_flux(simulationData& data, remapData& remap_data) {
+        PROF_PUSH("v_b_flux");
         using Range = pw::Range;
         using RIndexer = RemapIndexer<v_comp, b_comp>;
         constexpr AxisName perp_comp = AxisName(3 - int(v_comp) - int(b_comp)); 
@@ -188,11 +190,13 @@ namespace LARE {
             Range(0, data.nz)
         );
         pw::fence();
+        PROF_POP();
     }
 
 
     template <AxisName axis>
     void mass_flux(simulationData& data, remapData& remap_data) {
+        PROF_PUSH("mass_flux");
         using Range = pw::Range;
         constexpr AxisName axis_b = AxisName((int(axis) + 1) % 3);
         constexpr AxisName axis_c = AxisName((int(axis) + 2) % 3);
@@ -286,10 +290,12 @@ namespace LARE {
             Range(0, nz)
         );
         pw::fence();
+        PROF_POP();
     }
 
     template <AxisName axis, auto mPtr>
     void mom_flux(simulationData& data, remapData& remap_data) {
+        PROF_PUSH("mom_flux");
         using Range = pw::Range;
         constexpr AxisName axis_b = AxisName((int(axis) + 1) % 3);
         constexpr AxisName axis_c = AxisName((int(axis) + 2) % 3);
@@ -465,10 +471,12 @@ namespace LARE {
             Range(zs, data.nz)
         );
         pw::fence();
+        PROF_POP();
     }
 
     template <AxisName axis, auto mPtr>
     void energy_flux(simulationData& data, remapData& remap_data) {
+        PROF_PUSH("energy_flux");
         using Range = pw::Range;
         constexpr AxisName axis_b = AxisName((int(axis) + 1) % 3);
         constexpr AxisName axis_c = AxisName((int(axis) + 2) % 3);
@@ -558,10 +566,12 @@ namespace LARE {
             Range(0, data.nz)
         );
         pw::fence();
+        PROF_POP();
     }
 
     template <AxisName axis>
     void remap(LARE3D& lare, simulationData& data, remapData& remap_data) {
+        PROF_PUSH("remap");
         using Range = pw::Range;
         constexpr AxisName axis_b = AxisName((int(axis) + 1) % 3);
         constexpr AxisName axis_c = AxisName((int(axis) + 2) % 3);
@@ -1173,6 +1183,7 @@ namespace LARE {
 
         pass<axis>(remap_data) = 0;
         lare.boundary_conditions();
+        PROF_POP();
     }
 
     // NOTE(cmo): Instantiate templates in this TU

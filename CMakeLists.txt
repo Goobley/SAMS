@@ -33,6 +33,8 @@ option(NO_NATIVE_UNROLL "Do not unroll loops in the native OpenMP implementation
 option(NATIVE_LOOP_COLLAPSE "Enable loop collapse in the native OpenMP implementation" 0)
 #Enable timer support - prints times for each stage of each package at end of run
 option(TIMER_SUPPORT "Enable timing of packages" OFF)
+# Enable ROCTX marker support (AMD ROCm)
+option(ENABLE_ROCTX "Enable ROCTX profiling markers" OFF)
 #Compile with -O0 (debug compile mode) also, -Wall -Wextra
 option(DEBUG_COMPILE "Compile with -O0 (debug compile mode)" OFF)
 #Allow rank inconsistency in queries for whole code events (terminate, output)
@@ -203,6 +205,20 @@ target_include_directories(sams PRIVATE "${CMAKE_SOURCE_DIR}/include/boundaryCon
 target_include_directories(sams PRIVATE "${CMAKE_SOURCE_DIR}/include")
 target_link_libraries(sams PRIVATE ${HDF5_LIBRARIES})
 target_link_libraries(sams PRIVATE stdc++)
+
+if(ENABLE_ROCTX)
+  find_path(ROCTX_HEADER roctx.h)
+  find_library(ROCTX_LIBRARY roctx)
+  if(ROCTX_HEADER AND ROCTX_LIBRARY)
+    get_filename_component(ROCTX_INCLUDE_DIR ${ROCTX_HEADER} DIRECTORY)
+    target_include_directories(sams PRIVATE ${ROCTX_INCLUDE_DIR})
+    target_link_libraries(sams PRIVATE ${ROCTX_LIBRARY})
+    add_compile_definitions(USE_ROCTX)
+    message(STATUS "ROCTX profiling enabled")
+  else()
+    message(WARNING "ENABLE_ROCTX was set but roctx headers/libs not found; disabling")
+  endif()
+endif()
 
 if (MPI)
   target_include_directories(sams PRIVATE ${MPI_CXX_INCLUDE_DIRS})

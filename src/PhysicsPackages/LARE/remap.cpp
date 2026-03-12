@@ -14,6 +14,7 @@
 */
 #include "shared_data.h"
 #include "remapData.h"
+#include "profiling.h"
 
 namespace LARE
 {
@@ -22,6 +23,7 @@ namespace LARE
 
     void LARE3D::eulerian_remap(simulationData &data, remapData &remap_data)
     {
+        PROF_PUSH("eulerian_remap");
         using Range = pw::Range;
         int case_test;
 
@@ -91,5 +93,6 @@ namespace LARE
         data.x(ix, iy, iz) = data.xb(ix);
         data.y(ix, iy, iz) = data.yb(iy);
         data.z(ix, iy, iz) = data.zb(iz); }, Range(-2, data.nx + 2), Range(-1, data.ny + 2), Range(-1, data.nz + 2));
+        PROF_POP();
     }
 }

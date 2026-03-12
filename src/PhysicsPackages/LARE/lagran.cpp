@@ -13,6 +13,7 @@
    limitations under the License.
 */
 #include "shared_data.h"
+#include "profiling.h"
 
 namespace LARE
 {
@@ -59,6 +60,7 @@ namespace LARE
                                                   int j0, int j1, int j2, int j3,
                                                   int k0, int k1, int k2, int k3)
     {
+        PROF_PUSH("edge_viscosity");
         dvdots = pw::min(0.0, dvdots);
         T_dataType rho_edge = 2.0 * data.rho_v(i1, j1, k1) * data.rho_v(i2, j2, k2) / (data.rho_v(i1, j1, k1) + data.rho_v(i2, j2, k2));
 
@@ -89,11 +91,13 @@ namespace LARE
         // Find q_kur / abs(dv)
         T_dataType q_k_bar = rho_edge *
                              (data.visc2_norm * dv + std::sqrt(data.visc2_norm * data.visc2_norm * dv2 + (data.visc1 * cs_edge) * (data.visc1 * cs_edge)));
+        PROF_POP();
         return q_k_bar * (1.0 - psi) * dvdots;
     }
 
     void LARE3D::lagrangian_step(simulationData &data, SAMS::controlFunctions &controlFns)
     {   
+        PROF_PUSH("lagrangian_step");
         using Range = pw::Range;
 
         Range xbp = pw::Range(-1, data.nx + 1);
@@ -153,7 +157,7 @@ namespace LARE
                         xbp, ybp, zbp);
 
         shock_viscosity(data);
-        controlFns.calculateTimestep();
+        // controlFns.calculateTimestep();
         if (data.resistiveMHD)
         {
             T_dataType dt_sub = data.dtr;
@@ -170,10 +174,12 @@ namespace LARE
         }
 
         this->predictor_step(data);
+        PROF_POP();
     }
 
     void shock_viscosity(simulationData &data)
     {
+        PROF_PUSH("shock_viscosity");
         using Range = pw::Range;
         data.visc2_norm = 0.25 * (data.gas_gamma + 1.0) * data.visc2;
         pw::portableArrayManager svManager;
@@ -375,10 +381,12 @@ namespace LARE
         },
                         Range(0, data.nx), Range(0, data.ny), Range(0, data.nz));
         pw::fence();
+        PROF_POP();
     }
 
     void LARE3D::set_dt(simulationData &data)
     {
+        PROF_PUSH("set_dt");
         using Range = pw::Range;
 
         int i0 = data.geometry == geometryType::Cartesian ? 0 : 1;
@@ -440,10 +448,12 @@ namespace LARE
 
         data.dt = dt1;
         data.dtr = data.dt;
+        PROF_POP();
     }
 
     void LARE3D::eta_calc(simulationData &data)
     {
+        PROF_PUSH("eta_calc");
         using Range = pw::Range;
 
         pw::applyKernel(LAMBDA(T_indexType ix, T_indexType iy, T_indexType iz) {
@@ -473,10 +483,12 @@ namespace LARE
         },
                         Range(-1, data.nx + 1), Range(-1, data.ny + 1), Range(-1, data.nz + 1));
         pw::fence();
+        PROF_POP();
     }
 
     void resistive_effects(LARE3D &sim, simulationData &data)
     {
+        PROF_PUSH("resistive_effects");
         using Range = pw::Range;
 
         pw::assign(data.bx1, data.bx);
@@ -502,10 +514,12 @@ namespace LARE
 
         //Once more to get j_perp and j_par correct
         rkstep(data);
+        PROF_POP();
     }
 
     void rkstep(simulationData &data)
     {
+        PROF_PUSH("rkstep");
         using Range = pw::Range;
 
         pw::applyKernel(LAMBDA(T_indexType ix, T_indexType iy, T_indexType iz) {
@@ -532,10 +546,12 @@ namespace LARE
         },
                         Range(0, data.nx), Range(0, data.ny), Range(0, data.nz));
         pw::fence();
+        PROF_POP();
     }
 
     void bstep(LARE3D &sim, simulationData &data)
     {
+        PROF_PUSH("bstep");
         using Range = pw::Range;
 
         pw::applyKernel(LAMBDA(T_indexType ix, T_indexType iy, T_indexType iz) {
@@ -587,10 +603,12 @@ namespace LARE
         ) * data.dt / area; }, Range(1, data.nx), Range(1, data.ny), Range(0, data.nz));
         pw::fence();
         sim.bfield_bcs();
+        PROF_POP();
     }
 
     void LARE3D::predictor_step(simulationData &data)
     {
+        PROF_PUSH("predictor_step");
         using Range = pw::Range;
         // Update magnetic field and cell volume at half time step
         b_field_and_cv1_update(data);
@@ -734,11 +752,12 @@ namespace LARE
         pw::fence();
         // Remap (half timestep) boundary conditions
         this->remap_v_bcs();
+        PROF_POP();
     }
 
     void LARE3D::corrector_step(simulationData &data)
     {
-
+        PROF_PUSH("corrector_step");
         using Range = pw::Range;
         //End of predictor step?
 
@@ -801,10 +820,12 @@ namespace LARE
         this->energy_bcs();
         this->density_bcs();
         this->velocity_bcs();
+        PROF_POP();
     }
 
     void b_field_and_cv1_update(simulationData &data)
     {
+        PROF_PUSH("b_field_and_cv1_update");
         using Range = pw::Range;
 
         pw::applyKernel(LAMBDA(T_indexType ix, T_indexType iy, T_indexType iz) {
@@ -879,10 +900,12 @@ namespace LARE
         },
                         Range(-1, data.nx + 2), Range(-1, data.ny + 2), Range(-1, data.nz + 2));
         pw::fence();
+        PROF_POP();
     }
 
     void shock_heating(simulationData &data)
     {
+        PROF_PUSH("shock_heating");
         using Range = pw::Range;
 
         pw::applyKernel(LAMBDA(T_indexType ix, T_indexType iy, T_indexType iz) {
@@ -990,5 +1013,6 @@ namespace LARE
             data.visc_heat(ix, iy, iz) = pw::max(data.visc_heat(ix, iy, iz) / data.cv(ix, iy, iz), 0.0);
         },
                         Range(0, data.nx + 1), Range(0, data.ny + 1), Range(0, data.nz + 1));
+        PROF_POP();
     }
 }
