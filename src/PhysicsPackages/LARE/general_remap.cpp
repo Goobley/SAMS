@@ -574,29 +574,6 @@ namespace LARE {
         auto vc1_arr = v1_component<axis_c>(data);
         auto dab = d_b<axis>(data);
 
-        pw::portableArrayManager remap_manager;
-        remap_data.flux.nullify();
-
-        int xs_alloc = -1;
-        int ys_alloc = -1;
-        int zs_alloc = -1;
-        int xe_alloc = data.nx + 2;
-        int ye_alloc = data.ny + 2;
-        int ze_alloc = data.nz + 2;
-        if constexpr (axis == AxisName::X) {
-            xs_alloc = -2;
-        } else if constexpr (axis == AxisName::Y) {
-            ys_alloc = -2;
-        } else {
-            zs_alloc = -2;
-        }
-        remap_manager.allocate(
-            remap_data.flux, 
-            Range(xs_alloc, xe_alloc),
-            Range(ys_alloc, ye_alloc),
-            Range(zs_alloc, ze_alloc)
-        );
-
         pw::assign(data.dm, 0.0);
         pw::assign(remap_data.rho1, data.rho);
         pw::fence();
